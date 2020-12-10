@@ -98,5 +98,5 @@ workflows:
             - integration-test
           filters:
             branches:
-              only: 
+              only:
                 - master

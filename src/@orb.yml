@@ -17,7 +17,7 @@ examples:
 
       orbs:
         orbs-audit: aaronstillwell/orbs-audit@1.0.0
-      
+
       workflows:
         build-test-deploy:
           jobs:
