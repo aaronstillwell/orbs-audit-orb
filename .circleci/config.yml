@@ -80,7 +80,8 @@ workflows:
     when: << pipeline.parameters.run-integration-tests >>
     jobs:
       # Run any integration tests defined within the `jobs` key.
-      - integration-test-1
+      - orbs-audit/audit:
+          name: integration-test
       # Publish a semver version of the orb. relies on
       # the commit subject containing the text "[semver:patch|minor|major|skip]"
       # as that will determine whether a patch, minor or major
@@ -94,7 +95,7 @@ workflows:
           fail-if-semver-not-indicated: true
           publish-version-tag: false
           requires:
-            - integration-test-1
+            - integration-test
           filters:
             branches:
               only: 

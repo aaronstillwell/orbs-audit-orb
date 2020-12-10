@@ -1,7 +1,7 @@
 description: >
   This job audits your config for outdated orbs.
 parameters:
-  config_file_location:
+  config_file_path:
     description: >
       This parameter indicates where we should look for a circleci config.
     type: string
