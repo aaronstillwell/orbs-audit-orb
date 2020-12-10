@@ -1,0 +1,27 @@
+version: 2.1
+
+description: >
+  Orbs audit provides the ability to audit your CircleCI configuration
+  for orbs that are outdated or have newer versions available.
+
+display:
+  home_url: https://github.com/aaronstillwell/orbs-audit-orb
+  source_url: https://github.com/aaronstillwell/orbs-audit-orb
+
+examples:
+  audit_job_example:
+    description: >
+      Leverage the audit job to scan your config for outdated orbs.
+    usage:
+      version: 2.1
+
+      orbs:
+        orbs-audit: aaronstillwell/orbs-audit@1.0.0
+      
+      workflows:
+        build-test-deploy:
+          jobs:
+            - orbs-audit/audit
+
+orbs:
+  circleci-cli: circleci/circleci-cli@0.1.8

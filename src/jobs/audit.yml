@@ -1,0 +1,32 @@
+description: >
+  This job audits your config for outdated orbs.
+parameters:
+  config_file_location:
+    description: >
+      This parameter indicates where we should look for a circleci config.
+    type: string
+    default: .circleci/config.yml
+  fail_on_unpinned:
+    type: boolean
+    default: true
+executor: circleci-cli/default
+resource_class: small
+steps:
+  - run:
+      name: Install yq 3.3.0
+      command: |
+        curl --output yq --silent --show-error --location --fail --retry 3 \
+        https://github.com/mikefarah/yq/releases/download/3.3.0/yq_linux_amd64
+        sudo mv yq /usr/local/bin/
+        chmod +x /usr/local/bin/yq
+  - checkout
+  - run:
+      name: Scanning .circleci/config.yml for outdated orbs
+      environment:
+        CONFIG_FILE_PATH: << parameters.config_file_path >>
+        FAIL_ON_UNPINNED: << parameters.fail_on_unpinned >>
+      command: << include(scripts/audit.sh) >>
+  - store_test_results:
+      path: .outdated-orbs-helper/
+  - store_artifacts:
+      path: .outdated-orbs-helper/
