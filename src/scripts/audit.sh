@@ -1,5 +1,6 @@
 Audit() {
     # Globals passed from parameters
+    # TODO remove this or set defaults
     CONFIG_FILE_LOCATION=$CONFIG_FILE_LOCATION
     FAIL_ON_UNPINNED=$FAIL_ON_UNPINNED
 
@@ -59,7 +60,7 @@ Audit() {
     TESTS_COUNT=0
     ASSERTION_COUNT=0
 
-    ORBS=$(cat ${CONFIG_FILE_LOCATION} | yq r - "orbs.*")
+    ORBS=$(yq r - "orbs.*" < "${CONFIG_FILE_LOCATION}")
     while IFS= read -r orb; do
         ORB_REGEX="^([A-z_-]+)\/([A-z_-]+)(@([0-9]+)(\.([0-9]+))?(\.([0-9]+))?)?$"
 
@@ -71,7 +72,7 @@ Audit() {
         TESTS_COUNT=$((TESTS_COUNT+1))
         ASSERTION_COUNT=$((ASSERTION_COUNT+1))
 
-        META=$(circleci --skip-update-check orb info $orb)
+        META=$(circleci --skip-update-check orb info "$orb")
         REGEX="Latest: [A-z-]+\/[A-z-]+@([0-9]+)\.([0-9]+)\.([0-9]+)"
 
         if [[ $META =~ $REGEX ]]; then
@@ -92,10 +93,10 @@ Audit() {
 
             ASSERTION_COUNT=$((ASSERTION_COUNT+1))
             if [ "$CURRENT_MAJOR" != "" ]; then
-            if [ $CURRENT_MAJOR -ne $LATEST_MAJOR ]; then
+            if [ "$CURRENT_MAJOR" -ne "$LATEST_MAJOR" ]; then
                 # New major version available
                 print_problem "New major version of ${orb} available"
-                XML+=$(generate_failed_xml ${orb} "New major version available" "A new major version of this orb is available" 3)
+                XML+=$(generate_failed_xml "${orb}" "New major version available" "A new major version of this orb is available" 3)
                 FAIL_COUNT=$((FAIL_COUNT+1))
                 STATUS=1
                 continue
@@ -104,10 +105,10 @@ Audit() {
 
             ASSERTION_COUNT=$((ASSERTION_COUNT+1))
             if [ "$CURRENT_MINOR" != "" ]; then
-            if [ $CURRENT_MINOR -ne $LATEST_MINOR ]; then
+            if [ "$CURRENT_MINOR" -ne "$LATEST_MINOR" ]; then
                 # New major minor available
                 print_problem "New minor version of $orb available"
-                XML+=$(generate_failed_xml ${orb} "New minor version available" "A new minor version of this orb is available" 4)
+                XML+=$(generate_failed_xml "${orb}" "New minor version available" "A new minor version of this orb is available" 4)
                 FAIL_COUNT=$((FAIL_COUNT+1))
                 STATUS=1
                 continue
@@ -116,10 +117,10 @@ Audit() {
 
             ASSERTION_COUNT=$((ASSERTION_COUNT+1))
             if [ "$CURRENT_PATCH" != "" ]; then
-            if [ $CURRENT_PATCH -ne $LATEST_PATCH ]; then
+            if [ "$CURRENT_PATCH" -ne "$LATEST_PATCH" ]; then
                 # New patch version available
                 print_problem "New patch version of $orb available"
-                XML+=$(generate_failed_xml ${orb} "New minor version available" "A new patch sversion of this orb is available" 5)
+                XML+=$(generate_failed_xml "${orb}" "New minor version available" "A new patch sversion of this orb is available" 5)
                 FAIL_COUNT=$((FAIL_COUNT+1))
                 STATUS=1
                 continue
@@ -127,10 +128,10 @@ Audit() {
             fi
 
             print_green "${orb} is up to date"
-            XML+="$(generate_passed_xml ${orb} 5)"
+            XML+="$(generate_passed_xml "${orb}" 5)"
         else
             print_red "Couldn't identify pinned version of $orb"
-            XML+=$(generate_error_xml ${orb} "Could not identify pinned version" "Could not identify the pinned version of ${orb}" 2)
+            XML+=$(generate_error_xml "${orb}" "Could not identify pinned version" "Could not identify the pinned version of ${orb}" 2)
             FAIL_COUNT=$((FAIL_COUNT+1))
             if $FAIL_ON_UNPINNED ; then
             STATUS=1
@@ -139,13 +140,13 @@ Audit() {
         else
         print_red "Could not find orb info for $orb"
         ERROR_COUNT=$((ERROR_COUNT+1))
-        XML+=$(generate_error_xml ${orb} "Orb not found" "Could not find orb ${orb} in the registry" 1)
+        XML+=$(generate_error_xml "${orb}" "Orb not found" "Could not find orb ${orb} in the registry" 1)
         STATUS=1
         fi
     done <<< "${ORBS}"
 
-    TIMESTAMP=`date +%Y-%m-%dT%H:%M:%S%:z`
-    XML=$(printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<testsuite skipped='${SKIPPED_COUNT}' assertions='${ASSERTION_COUNT}' errors='${ERROR_COUNT}' failures='${FAIL_COUNT}' tests='${TESTS_COUNT}' name=\"Outdated orbs helper\" timestamp=\"${TIMESTAMP}\">\n${XML}\n")
+    TIMESTAMP=$(date +%Y-%m-%dT%H:%M:%S%:z)
+    XML=$(printf "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<testsuite skipped='%s' assertions='%s' errors='%s' failures='%s' tests='%s' name=\"Outdated orbs helper\" timestamp=\"%s\">\n%s\n" $SKIPPED_COUNT $ASSERTION_COUNT $ERROR_COUNT $FAIL_COUNT $TESTS_COUNT "$TIMESTAMP" "$XML")
     XML+="</testsuite>"
 
     mkdir -p ".outdated-orbs-helper"
